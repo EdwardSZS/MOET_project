@@ -33,7 +33,7 @@ def main():
             "Descripción",
             "Resultados",
             "Conclusiones",
-            "Proyectos futuros",
+            "Proyectos",
             "Referencias"
 
         )
@@ -44,11 +44,16 @@ def main():
         inicio()
     elif page == "Descripción":
         descripcion()
+        info()
         series_de_tiempo()
     elif page == "Resultados":
         modelos()
     elif page ==  "Conclusiones":
         conclusiones()
+    elif page == "Proyectos":
+        proyectos() 
+    elif page == "Referencias":
+        referencias()
        
 
 def inicio():
@@ -136,12 +141,47 @@ def descripcion():
     st.title("Características de los satélites y del dataset")
     st.subheader("La información para el modelo fue obtenida directamente de la NASA por sus sensores satelitales VIIRS y MODIS que hacen capturas de puntos de calor al rededor del mundo.")
     st.image('Sensores.jpg', caption='Características de sensores de cada satélite.')
+    st.image('MODIS.jpg', caption='Características de la muestra escaneada por el satélite.')
+    st.image('Viirs.jpg', caption='Características de la muestra escaneada por el satélite.')
     st.markdown("Punto de calor: Cualquier anomalía térmica presente en la tierra. (incendio, volcanes, costa afuera u otra fuente terrestre estática)")
     st.markdown("Un punto de calor activo representa el centro de un píxel marcado que contiene 1 o más focos/incendios en llamas activas. En la mayoría de los casos, los puntos representan incendios, pero a veces pueden representra cualquier anomalia termica como una erupción volcánica  (NASA).")
     st.markdown("Consideramos que los datos actuales tienen una calidad suficientemente buena para utilizarlos en aplicaciones de gestión de incendios y estudios científicos (NASA).")					
     st.markdown("https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@0.0,0.0,3.0z")				
 					
-					
+def info():
+    st.subheader("Descripción del tipo de datos")
+    df=load_data()
+    df['acq_time']=df['acq_time'].astype(str)
+    df['acq_time'] = df['acq_time'].apply(lambda x: agregar_dos_puntos(x))
+    df['acq_time'] = df['acq_time'].apply(lambda x: agregar_minutos_cero(x))
+    #Se convierte la variable a °c
+    df['brightness']-=272.15
+    df['datetime'] = pd.to_datetime(df['acq_date'] + ' ' + df['acq_time'])
+    df['confidence'] = df['confidence'].apply(lambda x: reemplazar(x))
+    st.markdown("Descripción del dataset")
+    st.write(df.info())
+    st.write(df.describe())
+   
+    df['datetime'] -= pd.Timedelta(hours=5)
+    fig, axes = plt.subplots(figsize=(10,6))
+    fig = px.box(df, x="confidence", y="frp", points="all")
+    st.plotly_chart(fig, use_container_width=True)
+
+def referencias():
+    st.header("Enlaces de consulta y preparación")
+    st.markdown("1: https://firms.modaps.eosdis.nasa.gov/map/#d:2024-04-14..2024-04-15;@-73.03,4.17,14.00z")
+    st.divider()
+    st.markdown("2: https://www.earthdata.nasa.gov/faq/firms-faq#ed-fire-on-ground")  
+    st.divider()
+    st.markdown("3: Documents sensor viirs: https://www.earthdata.nasa.gov/learn/find-data/near-real-time/firms/vnp14imgtdlnrt")
+    st.divider()
+    st.markdown("4: Documentación sensor Modis: https://www.earthdata.nasa.gov/learn/find-data/near-real-time/firms/mcd14dl-nrt")
+
+def proyectos():
+    st.header("Avances futuros")
+    st.markdown("1. Estimar el área quemada a partir de datos confiables, ya que la NASA recomienda no hacer estas estimaciones con la información proveniente de los puntos de calor detectados por los sensores VIIRS y MODIS. La intención de este proyecto sería para complementar las herramientas que ayuden con la preparación ante posibles eventos de incendio.")
+    st.divider()
+    st.markdown("2. Fortalecer la herramienta interactiva y buscar crear una api para mayor integridad con otras apps, como las del IDEAM. ")
 def series_de_tiempo():
     st.title("Análisis de series de tiempo")
    
@@ -284,7 +324,7 @@ def reemplazar(valor):
       return "n"
     else:
       return "l"
-    
+@st.cache_resource 
 def supervisado():
     df=load_data()
 
@@ -348,6 +388,7 @@ def supervisado():
     df_report = pd.DataFrame(report).transpose()
     st.subheader("Tabla del accuracy del modelo ")
     st.table(df_report)
+@st.cache_resource 
 def nosupervisado():
     df=load_data()
 
@@ -407,7 +448,9 @@ def nosupervisado():
     st.write(fpc)
 def conclusiones():
     st.title("Conclusiones")
-
+    st.subheader("1: De los modelos de clasificacion utilizados, se considera que el mejor resultado lo obtuvo la regresion logistica sin reponderacion de instancias, pues, a pesar que el modelo no tiene capacidad para clasificar la confianza de incendio en la categoria baja, si obtiene las mejores precisiones en las categorias de alta y media confianza de incendio las cuales son las de interés.")
+    st.divider()
+    st.subheader("2: En conclusión, al momento de generar un modelo no supervisado como el fuzzy c means, permite agrupar los datos con similitudes en características, lo cual ha permitiido analizar la intensidad en la radiación segregada por regiones como la orinoquía y al región andina. ")
 
 if __name__== "__main__":
     main()
