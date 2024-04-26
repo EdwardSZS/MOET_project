@@ -40,6 +40,18 @@ def main():
 
     )
     page_=st.session_state
+  
+       
+    st.sidebar.subheader("💬 Chatbot")
+    user_input = st.sidebar.text_input("Tú: ", "")
+
+    # Generate response based on user input
+    if user_input:
+        response = generate_response(user_input)
+        page=user_input
+        st.sidebar.write("Chatbot:", response)
+
+
     if page == "Inicio":
         inicio()
     elif page == "Descripción":
@@ -54,12 +66,11 @@ def main():
         proyectos() 
     elif page == "Referencias":
         referencias()
-       
-
+        
 def inicio():
-    st.title("PROPUESTA DE UN MODELO PARA CLASIFICAR O AGRUPAR LA CONFIANZA DE INCENDIO EN UBICACIONES DE COLOMBIA MEDIANTE INFORMACIÓN DE PUNTOS DE CALOR")
+    st.title("PROPUESTA DE UN MODELO PARA DETERMINAR LA CONFIANZA DE INCENDIO EN UBICACIONES DE COLOMBIA")
     st.header("Objetivo general")
-    st.subheader("Proponer un modelo que permita estimar la confianza de incendio en ubicaciones especificas de Colombia mediante información de puntos de calor, esto con el fin de brindar una herramienta que ayude a preparar al equipo de bomberos y entes ambientales ante posibles eventos provocados por el fenomeno del niño.")
+    st.subheader("Proponer un modelo que permita estimar la confianza de incendio en ubicaciones de Colombia mediante información de puntos de calor, esto con el fin de brindar una herramienta que ayude a preparar al equipo .")
     st.subheader("Objetivos específicos:")
     st.markdown(" **1.** Obtener información o el dataset para  entrenar el modelo.")
     st.markdown(" **2.** Identificar y analizar las variables relevantes para el modelo.")
@@ -146,6 +157,7 @@ def descripcion():
     st.markdown("Punto de calor: Cualquier anomalía térmica presente en la tierra. (incendio, volcanes, costa afuera u otra fuente terrestre estática)")
     st.markdown("Un punto de calor activo representa el centro de un píxel marcado que contiene 1 o más focos/incendios en llamas activas. En la mayoría de los casos, los puntos representan incendios, pero a veces pueden representra cualquier anomalia termica como una erupción volcánica  (NASA).")
     st.markdown("Consideramos que los datos actuales tienen una calidad suficientemente buena para utilizarlos en aplicaciones de gestión de incendios y estudios científicos (NASA).")					
+    st.image('Colombia.png', caption='El mapa de incendios identificados por el IDEAM.',use_column_width='auto')
     st.markdown("https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@0.0,0.0,3.0z")				
 					
 def info():
@@ -159,7 +171,10 @@ def info():
     df['datetime'] = pd.to_datetime(df['acq_date'] + ' ' + df['acq_time'])
     df['confidence'] = df['confidence'].apply(lambda x: reemplazar(x))
     st.markdown("Descripción del dataset")
-    st.write(df.info())
+    inf=df.info()
+    print(inf)
+
+    st.write(inf)
     st.write(df.describe())
    
     df['datetime'] -= pd.Timedelta(hours=5)
@@ -177,11 +192,32 @@ def referencias():
     st.divider()
     st.markdown("4: Documentación sensor Modis: https://www.earthdata.nasa.gov/learn/find-data/near-real-time/firms/mcd14dl-nrt")
 
+def generate_response(input_text):
+    # Define navigation responses based on user input
+    if "inicio" in input_text.lower():
+        return "Estás en la página de Inicio. ¿En qué más puedo ayudarte?"
+    elif "descripción" in input_text.lower():
+        return "Estás en la página de Descripción. ¿Necesitas más información sobre algún aspecto específico?"
+    elif "resultados" in input_text.lower():
+        return "Estás en la página de Resultados. ¿Hay algo en particular que te gustaría revisar?"
+    elif "conclusiones" in input_text.lower():
+        return "Estás en la página de Conclusiones. ¿Te gustaría profundizar en algún punto en particular?"
+    elif "proyectos" in input_text.lower():
+        return "Estás en la página de Proyectos. ¿Qué proyecto te gustaría explorar?"
+    elif "referencias" in input_text.lower():
+        return "Estás en la página de Referencias. ¿Buscas alguna referencia específica?"
+    else:
+        return "Lo siento, no entendí. ¿Puedes ser más específico?"
+
 def proyectos():
     st.header("Avances futuros")
     st.markdown("1. Estimar el área quemada a partir de datos confiables, ya que la NASA recomienda no hacer estas estimaciones con la información proveniente de los puntos de calor detectados por los sensores VIIRS y MODIS. La intención de este proyecto sería para complementar las herramientas que ayuden con la preparación ante posibles eventos de incendio.")
     st.divider()
     st.markdown("2. Fortalecer la herramienta interactiva y buscar crear una api para mayor integridad con otras apps, como las del IDEAM. ")
+
+    
+    
+    
 def series_de_tiempo():
     st.title("Análisis de series de tiempo")
    
@@ -288,6 +324,8 @@ def plot_month(df2,df1):
 def modelos():
 
     st.title("Análisis de modelos supervisados y no supervisados")
+    st.subheader("Iteración de algunos modelos")
+    st.image('modelos.jpg', caption='Muestras de algunos modelos')
     with st.expander("Modelo supervisado"):
         supervisado()
     with st.expander("Modelo No supervisado"):    
@@ -324,7 +362,7 @@ def reemplazar(valor):
       return "n"
     else:
       return "l"
-@st.cache_resource 
+#@st.cache_resource(experimental_allow_widgets=True)
 def supervisado():
     df=load_data()
 
@@ -349,8 +387,34 @@ def supervisado():
     df_regresionlogistica['intervalo_hora'] = df_regresionlogistica['hora'].apply(lambda x: intervalo(x))
     
     df_regresionlogistica_1 = pd.get_dummies(df_regresionlogistica, columns=['intervalo_hora'])
-    
-    numeric_variables = df_regresionlogistica_1[["latitude", "longitude", "brightness", "frp","intervalo_hora_[0-3]","intervalo_hora_[12-15]","intervalo_hora_[20-23]","intervalo_hora_[8-11]"]]
+    option=st.sidebar.multiselect(
+        "Items probados en el modelo",
+        (
+            "latitude",
+            "longitude",
+            "brightness",
+            "frp",
+            "intervalo_hora_[0-3]",
+            "intervalo_hora_[12-15]",
+            "intervalo_hora_[20-23]",
+            "intervalo_hora_[8-11]"
+
+        ),("latitude",
+            "longitude",
+            "brightness",
+            "frp",
+            "intervalo_hora_[0-3]",
+            "intervalo_hora_[12-15]",
+            "intervalo_hora_[20-23]",
+            "intervalo_hora_[8-11]")
+
+
+    )
+
+    df_regresionlogistica_0=df_regresionlogistica_1[option]
+   
+
+    numeric_variables = df_regresionlogistica_0
     correlation_matrix = numeric_variables.corr()  # Matriz de correlación
 
     # Visualización de la matriz de correlación
@@ -360,8 +424,8 @@ def supervisado():
     plt.title("Matriz de Correlación")
     st.subheader("Matriz de correlación general")
     st.pyplot(fig1)
-    df_regresionlogistica_2=df_regresionlogistica_1.drop(["acq_time","datetime","confidence","hora","intervalo_hora_[0-3]","brightness","scan","track","acq_date","satellite","instrument","version","bright_t31","daynight"], axis=1)
-    x_regresionlogistica=df_regresionlogistica_1.drop(["acq_time","datetime","confidence","hora","intervalo_hora_[0-3]","brightness","scan","track","acq_date","satellite","instrument","version","bright_t31","daynight"], axis=1)
+    #df_regresionlogistica_2=df_regresionlogistica_0.drop(["acq_time","datetime","confidence","hora","intervalo_hora_[0-3]","brightness","scan","track","acq_date","satellite","instrument","version","bright_t31","daynight"], axis=1)
+    x_regresionlogistica=df_regresionlogistica_0
     y_regresionlogistica=df_regresionlogistica_1['confidence']
     print("hora",y_regresionlogistica)
     xl_train, xl_test, yl_train, yl_test = train_test_split(x_regresionlogistica, y_regresionlogistica, test_size=0.3, random_state=42)
