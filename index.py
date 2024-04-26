@@ -166,7 +166,7 @@ def series_de_tiempo():
     df1['datetime'] = pd.to_datetime(df['acq_date'] + ' ' + df['acq_time'])
     
     df1 = df1.sort_values(by='datetime')
-    df1=df1.groupby(by="datetime").agg({'brightness': 'mean'}).reset_index()
+    df1=df1.groupby(by="datetime").agg({'brightness': 'mean','frp': 'mean'}).reset_index()
     band=0
     if st.sidebar.button('Horario') and band == 0:
         st.subheader("Serie de tiempo frecuencia horaria")
@@ -177,10 +177,11 @@ def series_de_tiempo():
 @st.cache_resource(experimental_allow_widgets=True)
 def plot_daily(df1,df2):
     count=0
+    st.markdown("Análisis para la temperatura")
     fig = go.Figure(data=go.Scatter(x=df1['datetime'], y=df1.brightness, mode='lines+markers'))
     fig.update_layout(title='Time Series',
                       xaxis_title='Datetime',
-                      yaxis_title='Index')
+                      yaxis_title='brightness')
     st.plotly_chart(fig, use_container_width=True)
     st.header("Estimar las autocorrelacciones")
     fig1, axes = plt.subplots(1, 2, figsize=(10, 8))
@@ -191,13 +192,28 @@ def plot_daily(df1,df2):
     plot_pacf(df1['brightness'], lags=30, ax=axes[1])
     axes[1].set_title('Partial Autocorrelation')
     st.pyplot(fig1)
+    st.markdown("Análisis para el FRP")
+    fig2 = go.Figure(data=go.Scatter(x=df1['datetime'], y=df1.frp, mode='lines+markers'))
+    fig2.update_layout(title='Time Series',
+                      xaxis_title='Datetime',
+                      yaxis_title='frp')
+    st.plotly_chart(fig2, use_container_width=True)
+    st.header("Estimar las autocorrelacciones")
+    fig3, axes = plt.subplots(1, 2, figsize=(10, 8))
+
+    plot_acf(df1['frp'], lags=30, ax=axes[0])
+    axes[0].set_title('Autocorrelation')
+
+    plot_pacf(df1['frp'], lags=30, ax=axes[1])
+    axes[1].set_title('Partial Autocorrelation')
+    st.pyplot(fig3)
     return count
 @st.cache_resource(experimental_allow_widgets=True)
 def plot_month(df2,df1):
     count_1=0
     df2['datetime'] = pd.to_datetime(df2['acq_date'])
     df2 = df2.sort_values(by='datetime')
-    df2=df2.groupby(by="datetime").agg({'brightness': 'mean'}).reset_index()
+    df2=df2.groupby(by="datetime").agg({'brightness': 'mean','frp':'mean'}).reset_index()
     fig = go.Figure(data=go.Scatter(x=df2['datetime'], y=df2.brightness, mode='lines+markers'))
     fig.update_layout(title='Time Series',
                   xaxis_title='Datetime',
@@ -212,11 +228,30 @@ def plot_month(df2,df1):
     axes[1].set_title('Partial Autocorrelation')
     st.pyplot(fig1)
 
+    st.markdown("Análisis para el FRP")
+    fig2 = go.Figure(data=go.Scatter(x=df2['datetime'], y=df2.frp, mode='lines+markers'))
+    fig2.update_layout(title='Time Series',
+                      xaxis_title='Datetime',
+                      yaxis_title='frp')
+    st.plotly_chart(fig2, use_container_width=True)
+    st.header("Estimar las autocorrelacciones")
+    fig3, axes = plt.subplots(1, 2, figsize=(10, 8))
+
+    plot_acf(df2['frp'], lags=15, ax=axes[0])
+    axes[0].set_title('Autocorrelation')
+
+    plot_pacf(df2['frp'], lags=15, ax=axes[1])
+    axes[1].set_title('Partial Autocorrelation')
+    st.pyplot(fig3)
+    
     return count_1
 def modelos():
 
     st.title("Análisis de modelos supervisados y no supervisados")
-    supervisado()
+    with st.expander("Modelo supervisado"):
+        supervisado()
+    with st.expander("Modelo No supervisado"):    
+        nosupervisado()
 
 def intervalo(valor):
     if int(valor) <=3 and int(valor) >=0:
@@ -283,6 +318,7 @@ def supervisado():
    
     sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", center=0)
     plt.title("Matriz de Correlación")
+    st.subheader("Matriz de correlación general")
     st.pyplot(fig1)
     df_regresionlogistica_2=df_regresionlogistica_1.drop(["acq_time","datetime","confidence","hora","intervalo_hora_[0-3]","brightness","scan","track","acq_date","satellite","instrument","version","bright_t31","daynight"], axis=1)
     x_regresionlogistica=df_regresionlogistica_1.drop(["acq_time","datetime","confidence","hora","intervalo_hora_[0-3]","brightness","scan","track","acq_date","satellite","instrument","version","bright_t31","daynight"], axis=1)
@@ -299,6 +335,7 @@ def supervisado():
     model.fit(xl_train, yl_train)
     yl_pred = model.predict(xl_test)
     columnas=yl_test.unique()
+    st.subheader("Matriz de confusión para la regresión logística ")
     conf_matrix = confusion_matrix(yl_test, yl_pred)
     fig2, axes = plt.subplots( figsize=(4, 2))
     #plt.figure(figsize=(4,2))
@@ -309,7 +346,65 @@ def supervisado():
     st.pyplot(fig2)
     report = classification_report(yl_test, yl_pred, output_dict=True)
     df_report = pd.DataFrame(report).transpose()
+    st.subheader("Tabla del accuracy del modelo ")
     st.table(df_report)
+def nosupervisado():
+    df=load_data()
+
+
+    # Aplicar la función a la columna 'tiempo'
+    df['acq_time']=df['acq_time'].astype(str)
+    df['acq_time'] = df['acq_time'].apply(lambda x: agregar_dos_puntos(x))
+    df['acq_time'] = df['acq_time'].apply(lambda x: agregar_minutos_cero(x))
+    #Se convierte la variable a °c
+    df['brightness']-=272.15
+    df['datetime'] = pd.to_datetime(df['acq_date'] + ' ' + df['acq_time'])
+    df['confidence'] = df['confidence'].apply(lambda x: reemplazar(x))
+    dfU = df
+   
+    dfU['datetime'] -= pd.Timedelta(hours=5)
+
+    confidence_mapping = {'l': 0, 'n': 1, 'h': 2}
+    dfU['confidence_numeric'] = dfU['confidence'].map(confidence_mapping)
+    X = dfU[['latitude', 'longitude', 'brightness', 'frp', 'confidence_numeric']]
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    inertia = []
+    for i in range(1, 11):
+        kmeans = KMeans(n_clusters=i, random_state=42)
+        kmeans.fit(X_scaled)
+        inertia.append(kmeans.inertia_)
+
+    fig3, axes = plt.subplots(figsize=(10,6))
+    plt.plot(range(1, 11), inertia, marker='o', linestyle='--')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('Inertia')
+    plt.title('Elbow Method')
+    st.pyplot(fig3)
+
+    X_scaled = X_scaled.T
+    #silhouette_score estima el número de cluster / son tres niveles de confianza
+    # Set the number of clusters
+    n_clusters = 3
+    #1.1 Fuzziness parameter (m)
+    # Apply Fuzzy C-Means
+    cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
+        X_scaled, n_clusters, 1.1, error=0.005, maxiter=1000, init=None)
+
+    # Assign clusters
+    cluster_membership = np.argmax(u, axis=0)
+
+    # Plotting the clusters
+    fig4, axes = plt.subplots(figsize=(10,6))
+    plt.scatter(dfU['longitude'], dfU['latitude'], c=cluster_membership, cmap='viridis', s=50, alpha=0.5)
+    plt.title('Fuzzy C-Means Clustering of Fire Incidents (Confidence Levels)')
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.colorbar(label='Cluster')
+    plt.grid(True)
+    st.pyplot(fig4)
+    st.markdown("Descripción del score: ")
+    st.write(fpc)
 def conclusiones():
     st.title("Conclusiones")
 
