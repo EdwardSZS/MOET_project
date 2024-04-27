@@ -71,6 +71,7 @@ def inicio():
     st.title("PROPUESTA DE UN MODELO PARA DETERMINAR LA CONFIANZA DE INCENDIO EN UBICACIONES DE COLOMBIA")
     st.divider()
     st.header("Objetivo general")
+    
     st.subheader("Proponer un modelo que permita estimar la confianza de incendio en ubicaciones de Colombia mediante información de puntos de calor, esto con el fin de brindar una herramienta que ayude a preparar al equipo de bomberos y entes ambientales ante posibles eventos provocados por el fenomeno del niño.")
     st.subheader("Objetivos específicos:")
     st.markdown(" **1.** Obtener información o el dataset para  entrenar el modelo.")
@@ -158,7 +159,7 @@ def descripcion():
     st.markdown("Punto de calor: Cualquier anomalía térmica presente en la tierra. (incendio, volcanes, costa afuera u otra fuente terrestre estática)")
     st.markdown("Un punto de calor activo representa el centro de un píxel marcado que contiene 1 o más focos/incendios en llamas activas. En la mayoría de los casos, los puntos representan incendios, pero a veces pueden representra cualquier anomalia termica como una erupción volcánica  (NASA).")
     st.markdown("Consideramos que los datos actuales tienen una calidad suficientemente buena para utilizarlos en aplicaciones de gestión de incendios y estudios científicos (NASA).")					
-    st.image('Colombia.png', caption='El mapa de incendios identificados por el IDEAM.',use_column_width='auto')
+    
     st.markdown("https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@0.0,0.0,3.0z")				
 					
 def info():
@@ -172,10 +173,9 @@ def info():
     df['datetime'] = pd.to_datetime(df['acq_date'] + ' ' + df['acq_time'])
     df['confidence'] = df['confidence'].apply(lambda x: reemplazar(x))
     st.markdown("Descripción del dataset")
-    inf=df.info()
-    print(inf)
+   
 
-    st.write(inf)
+    st.image('info.jpg', caption='Descripción del tipo de datos')
     st.write(df.describe())
    
     df['datetime'] -= pd.Timedelta(hours=5)
@@ -453,6 +453,8 @@ def supervisado():
     df_report = pd.DataFrame(report).transpose()
     st.subheader("Tabla del accuracy del modelo ")
     st.table(df_report)
+    st.image('Colombia.png', caption='El mapa de radiación identificados por el IDEAM.',use_column_width='auto')
+
 @st.cache_resource 
 def nosupervisado():
     df=load_data()
