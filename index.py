@@ -69,8 +69,9 @@ def main():
         
 def inicio():
     st.title("PROPUESTA DE UN MODELO PARA DETERMINAR LA CONFIANZA DE INCENDIO EN UBICACIONES DE COLOMBIA")
+    st.divider()
     st.header("Objetivo general")
-    st.subheader("Proponer un modelo que permita estimar la confianza de incendio en ubicaciones de Colombia mediante información de puntos de calor, esto con el fin de brindar una herramienta que ayude a preparar al equipo .")
+    st.subheader("Proponer un modelo que permita estimar la confianza de incendio en ubicaciones de Colombia mediante información de puntos de calor, esto con el fin de brindar una herramienta que ayude a preparar al equipo de bomberos y entes ambientales ante posibles eventos provocados por el fenomeno del niño.")
     st.subheader("Objetivos específicos:")
     st.markdown(" **1.** Obtener información o el dataset para  entrenar el modelo.")
     st.markdown(" **2.** Identificar y analizar las variables relevantes para el modelo.")
