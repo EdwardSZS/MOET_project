@@ -517,7 +517,7 @@ def conclusiones():
     st.title("Conclusiones")
     st.subheader("1: De los modelos de clasificacion utilizados, se considera que el mejor resultado lo obtuvo la regresion logistica sin reponderacion de instancias, pues, a pesar que el modelo no tiene capacidad para clasificar la confianza de incendio en la categoria baja, si obtiene las mejores precisiones en las categorias de alta y media confianza de incendio las cuales son las de interés.")
     st.divider()
-    st.subheader("2: En conclusión, al momento de generar un modelo no supervisado como el fuzzy c means, permite agrupar los datos con similitudes en características, lo cual ha permitiido analizar la intensidad en la radiación segregada por regiones como la orinoquía y al región andina. ")
+    st.subheader("2: En conclusión, al momento de generar un modelo no supervisado como el fuzzy c means, permite agrupar los datos con similitudes en características, lo cual ha permitido analizar la intensidad en la radiación segregada por regiones como la orinoquía y al región andina. ")
 
 if __name__== "__main__":
     main()
